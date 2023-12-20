@@ -1,14 +1,14 @@
 import { cn } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
-import { Playlist } from '@/constants/data';
 import { Combobox } from '@/components/combobox';
+import { ReactNode } from 'react';
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
-  playlists: Playlist[];
+  projectTypes: { label: string; value: string; icon: ReactNode }[];
 }
 
-export function Sidebar({ className, playlists }: SidebarProps) {
+export function Sidebar({ className, projectTypes }: SidebarProps) {
   return (
     <div className={cn('pb-12', className)}>
       <div className="space-y-4 py-4">
@@ -16,44 +16,17 @@ export function Sidebar({ className, playlists }: SidebarProps) {
           <div className="mb-2">
             <Combobox />
           </div>
-          {/* <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-            Project A
-          </h2> */}
           <div className="space-y-1">
-            <Button variant="secondary" className="w-full justify-start">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mr-2 h-4 w-4"
+            {projectTypes.map((project) => (
+              <Button
+                variant="secondary"
+                className="w-full justify-start"
+                key={project.value}
               >
-                <circle cx="12" cy="12" r="10" />
-                <polygon points="10 8 16 12 10 16 10 8" />
-              </svg>
-              Data layer checker
-            </Button>
-            {/* <Button variant="ghost" className="w-full justify-start">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mr-2 h-4 w-4"
-              >
-                <rect width="7" height="7" x="3" y="3" rx="1" />
-                <rect width="7" height="7" x="14" y="3" rx="1" />
-                <rect width="7" height="7" x="14" y="14" rx="1" />
-                <rect width="7" height="7" x="3" y="14" rx="1" />
-              </svg>
-              Automated QA
-            </Button> */}
+                {project.icon}
+                {project.label}
+              </Button>
+            ))}
           </div>
         </div>
       </div>

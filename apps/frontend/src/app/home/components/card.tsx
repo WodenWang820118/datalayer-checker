@@ -6,20 +6,28 @@ import {
 } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
-type Props = {
-  isCreate?: boolean;
-};
+type Props =
+  | {
+      slug: string;
+      description: string;
+      title: string;
+    }
+  | {
+      isCreate: true;
+    };
 
-export function CardWithForm({ isCreate }: Props) {
+export function CardWithForm(props: Props) {
   return (
-    <Link to={`/project/${isCreate ? 'new' : 'id'}`}>
+    <Link to={`/project/${'isCreate' in props ? 'new' : props.slug}`}>
       <Card className="cursor-pointer hover:border-black transition-colors h-full">
         <CardHeader>
-          <CardTitle>{isCreate ? 'Create project' : 'Project A'}</CardTitle>
+          <CardTitle>
+            {'isCreate' in props ? 'Create project' : props.title}
+          </CardTitle>
           <CardDescription>
-            {isCreate
+            {'isCreate' in props
               ? 'Deploy your new project in one-click.'
-              : 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Similique, ea!'}
+              : props.description}
           </CardDescription>
         </CardHeader>
       </Card>

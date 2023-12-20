@@ -1,5 +1,4 @@
 import { ModeToggle } from '@/components/theme-toggle';
-import { playlists } from '@/constants/data';
 import { cn } from '@/lib/utils';
 import { Sidebar } from '../sidebar/sidebar';
 import { MainNav } from './components/main-nav';
@@ -31,7 +30,29 @@ function TopNav({ children, containerClassName, withSidebar }: Props) {
       >
         {withSidebar ? (
           <div className="h-full grid lg:grid-cols-5">
-            <Sidebar playlists={playlists} />
+            <Sidebar
+              projectTypes={[
+                {
+                  label: 'Data layer checker',
+                  value: 'dl-checker',
+                  icon: (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mr-2 h-4 w-4"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <polygon points="10 8 16 12 10 16 10 8" />
+                    </svg>
+                  ),
+                },
+              ]}
+            />
             <div className="col-span-3 lg:col-span-4 lg:border-l flex flex-col container py-4">
               {children}
             </div>
