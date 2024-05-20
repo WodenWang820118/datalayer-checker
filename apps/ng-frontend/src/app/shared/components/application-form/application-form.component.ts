@@ -1,8 +1,8 @@
-import { CommonModule } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { EMPTY, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { catchError, EMPTY, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import {
@@ -15,10 +15,7 @@ import {
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
-import {
-  CookieData,
-  LocalStorageData,
-} from '../../../../../../../libs/utils/src/lib/interfaces/setting.interface';
+import { CookieData, LocalStorageData } from '@utils';
 import { SettingsService } from '../../services/api/settings/settings.service';
 import { ActivatedRoute } from '@angular/router';
 
@@ -26,7 +23,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-application-form',
   standalone: true,
   imports: [
-    CommonModule,
+    NgIf,
     MatIconModule,
     MatButtonModule,
     MatCardModule,
@@ -74,6 +71,10 @@ export class ApplicationFormComponent implements OnInit, OnDestroy {
             project.settings.application.localStorage.data;
           this.cookieSettings = project.settings.application.cookie.data;
           this.loadInitialData();
+        }),
+        catchError((err) => {
+          console.error(err);
+          return EMPTY;
         })
       )
       .subscribe();
@@ -115,6 +116,10 @@ export class ApplicationFormComponent implements OnInit, OnDestroy {
         this.isEmptyLocalStorage = value.some(
           (setting: LocalStorageData) => !setting.key || !setting.value
         );
+      }),
+      catchError((error) => {
+        console.error('Error: ', error);
+        return error;
       })
     );
   }
@@ -126,6 +131,10 @@ export class ApplicationFormComponent implements OnInit, OnDestroy {
         this.isEmptyCookie = value.some(
           (setting: CookieData) => !setting.key || !setting.value
         );
+      }),
+      catchError((error) => {
+        console.error('Error: ', error);
+        return error;
       })
     );
   }
@@ -144,6 +153,10 @@ export class ApplicationFormComponent implements OnInit, OnDestroy {
             );
           }
           return EMPTY;
+        }),
+        catchError((error) => {
+          console.error('Error: ', error);
+          return error;
         })
       )
       .subscribe();

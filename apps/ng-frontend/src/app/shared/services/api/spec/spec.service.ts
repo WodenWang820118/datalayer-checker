@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Subject, map } from 'rxjs';
+import { BehaviorSubject, catchError, of, Subject } from 'rxjs';
 import { ProjectSpec, Spec } from '@utils';
 import { environment } from '../../../../../environments/environment';
 
@@ -14,21 +14,32 @@ export class SpecService {
   constructor(private http: HttpClient) {}
 
   getSpecs() {
-    return this.http.get<ProjectSpec[]>(environment.specApiUrl);
+    return this.http.get<ProjectSpec[]>(environment.specApiUrl).pipe(
+      catchError((error) => {
+        console.error(error);
+        return [];
+      })
+    );
   }
 
   getProjectSpec(projectSlug: string) {
-    return this.http.get<ProjectSpec>(
-      `${environment.specApiUrl}/${projectSlug}`
-    );
+    return this.http
+      .get<ProjectSpec>(`${environment.specApiUrl}/${projectSlug}`)
+      .pipe(
+        catchError((error) => {
+          console.error(error);
+          return of(null);
+        })
+      );
   }
 
   getSpec(projectSlug: string, eventName: string) {
     return this.http
-      .get<ProjectSpec>(`${environment.specApiUrl}/${projectSlug}`)
+      .get<Spec>(`${environment.specApiUrl}/${projectSlug}/${eventName}`)
       .pipe(
-        map((project) => {
-          return project.specs.find((spec) => spec.event === eventName);
+        catchError((error) => {
+          console.error(error);
+          return of(null);
         })
       );
   }
@@ -37,18 +48,29 @@ export class SpecService {
     const jsonContent = JSON.parse(content);
     console.log('Project Slug', projectSlug);
     console.log('Spec', jsonContent);
-    return this.http.post(`${environment.specApiUrl}/${projectSlug}`, {
-      data: jsonContent,
-    });
+    return this.http
+      .post(`${environment.specApiUrl}/${projectSlug}`, {
+        data: jsonContent,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error(error);
+          return of(null);
+        })
+      );
   }
 
   updateSpec(projectSlug: string, eventName: string, content: string) {
     const jsonContent = JSON.parse(content);
-    return this.http.put(
-      `${environment.specApiUrl}/${projectSlug}/${eventName}`,
-      {
+    return this.http
+      .put(`${environment.specApiUrl}/${projectSlug}/${eventName}`, {
         data: jsonContent,
-      }
-    );
+      })
+      .pipe(
+        catchError((error) => {
+          console.error(error);
+          return of(null);
+        })
+      );
   }
 }

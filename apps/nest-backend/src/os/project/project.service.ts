@@ -24,19 +24,6 @@ export class ProjectService {
     }
   }
 
-  async getProjectRecordings(projectSlug: string) {
-    try {
-      const recordingPath = await this.folderPathService.getRecordingFolderPath(
-        projectSlug
-      );
-      const recordings = this.folderService.readFolderFiles(recordingPath);
-      return recordings;
-    } catch (error) {
-      Logger.error(error.message, 'ProjectService.getProjectRecordings');
-      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   async getProjectsMetadata() {
     try {
       const projectRoot =
@@ -56,7 +43,7 @@ export class ProjectService {
       const projectsAll = await Promise.all(projectSettingsPromises);
 
       // Logger.log(projectsAll, 'ProjectService.getProjects');
-      return projectsAll;
+      return projectsAll || [];
     } catch (error) {
       Logger.error(error.message, 'ProjectService.getProjects');
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);

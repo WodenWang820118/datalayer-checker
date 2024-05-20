@@ -9,10 +9,8 @@ app.use(cors());
 
 app.get('/settings/ng_gtm_integration_sample', (req, res) => {
   try {
-    const data = fs.readFileSync('./mock/mock-server/settings.json');
-    // Parse the buffer to a JSON object
+    const data = fs.readFileSync('./mock/mock-db/settings.json');
     const json = JSON.parse(data);
-    // Send the JSON content
     res.setHeader('Content-Type', 'application/json');
     res.send({
       projectSlug: 'ng_gtm_integration_sample',

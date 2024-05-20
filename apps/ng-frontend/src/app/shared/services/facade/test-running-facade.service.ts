@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DataLayerService } from '../api/datalayer/datalayer.service';
 import { GtmOperatorService } from '../api/gtm-operator/gtm-operator.service';
-import { switchMap, BehaviorSubject, take } from 'rxjs';
+import { switchMap, BehaviorSubject, take, catchError } from 'rxjs';
 import { IReportDetails, EventInspectionPresetDto } from '@utils';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
@@ -9,9 +9,7 @@ import { ProjectDataSourceService } from '../project-data-source/project-data-so
 import { QaRequestService } from '../api/qa-request/qa-request.service';
 import { SettingsService } from '../api/settings/settings.service';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable()
 export class TestRunningFacadeService {
   isRunningTestSubject = new BehaviorSubject<boolean>(false);
   eventRunningTestSubject = new BehaviorSubject<string>('');
@@ -83,6 +81,12 @@ export class TestRunningFacadeService {
             project.settings.authentication.username,
             project.settings.authentication.password
           );
+        }),
+        catchError((error) => {
+          console.error(error);
+          this.isRunningTestSubject.next(false);
+          this.eventRunningTestSubject.next('');
+          return [];
         })
       )
       .subscribe((res) => {
@@ -90,7 +94,7 @@ export class TestRunningFacadeService {
         // update the report details
         const updatedEvent: IReportDetails = (res as any)[0];
         testDataSource.data = testDataSource.data.map((item) => {
-          if (item.eventName === updatedEvent.eventName) {
+          if (item.eventId === updatedEvent.eventId) {
             return updatedEvent;
           }
           return item;

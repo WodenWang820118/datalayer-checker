@@ -1,43 +1,29 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { InitProjectFormComponent } from '../../components/init-project-form/init-project-form.component';
-import {
-  FormBuilder,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { FormBuilder, Validators } from '@angular/forms';
 import { ConfigurationService } from '../../../../shared/services/api/configuration/configuration.service';
-import { MatCardModule } from '@angular/material/card';
 import { Subject, takeUntil, tap } from 'rxjs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { RootFormComponent } from '../../../../shared/components/root-form/root-form.component';
+import { ProjectImportComponent } from '../../../../shared/components/project-import/project-import.component';
 
 @Component({
   selector: 'app-init-project-view',
   standalone: true,
-  imports: [
-    CommonModule,
-    InitProjectFormComponent,
-    FormsModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatCardModule,
-    MatButtonModule,
-    MatTooltipModule,
-    RootFormComponent,
-  ],
-  templateUrl: `./init-project-view.component.html`,
+  imports: [InitProjectFormComponent, ProjectImportComponent],
+  template: `
+    <div class="init-project">
+      <div class="init-project__form">
+        <app-project-import></app-project-import>
+        <app-init-project-form></app-init-project-form>
+      </div>
+    </div>
+  `,
   styles: `
     .init-project {
       padding: 1rem 10rem;
-      &__config {
+      &__form {
         display: flex;
         flex-direction: column;
+        gap: 3rem;
       }
     }
   `,
@@ -55,6 +41,7 @@ export class InitProjectViewComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    // TODO: could be removed since the business logic is not here anymore
     this.configurationService
       .getConfiguration('rootProjectPath')
       .pipe(

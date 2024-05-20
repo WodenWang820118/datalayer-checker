@@ -9,12 +9,10 @@ app.use(cors());
 
 app.get('/projects', (req, res) => {
   try {
-    const data = fs.readFileSync('./mock/mock-server/settings.json');
-    // Parse the buffer to a JSON object
+    const data = fs.readFileSync('./mock/mock-db/project.json');
     const json = JSON.parse(data);
-    // Send the JSON content
     res.setHeader('Content-Type', 'application/json');
-    res.send([json]);
+    res.send(json);
   } catch (err) {
     res.status(500).send('Error reading data file');
   }
@@ -22,10 +20,8 @@ app.get('/projects', (req, res) => {
 
 app.get('/projects/ng_gtm_integration_sample', (req, res) => {
   try {
-    const data = fs.readFileSync('./mock/mock-server/settings.json');
-    // Parse the buffer to a JSON object
+    const data = fs.readFileSync('./mock/mock-db/settings.json');
     const json = JSON.parse(data);
-    // Send the JSON content
     res.setHeader('Content-Type', 'application/json');
     res.send(json);
   } catch (err) {
@@ -36,11 +32,9 @@ app.get('/projects/ng_gtm_integration_sample', (req, res) => {
 app.get('/projects/images/ng_gtm_integration_sample/:imageName', (req, res) => {
   try {
     const imageName = req.params.imageName;
-    const imagePath = `./mock/mock-server/${imageName}.png`;
+    const imagePath = `./mock/mock-db/${imageName}.png`;
 
     const data = fs.readFileSync(imagePath);
-    // Parse the buffer to a JSON object
-    // Send the JSON content
     res.setHeader('Content-Type', 'image/png');
     res.send(data);
   } catch (err) {

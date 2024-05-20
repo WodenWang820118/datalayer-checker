@@ -1,15 +1,11 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Subject, switchMap, take, takeUntil, tap } from 'rxjs';
+import { catchError, Subject, switchMap, take, takeUntil, tap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSelectModule } from '@angular/material/select';
-import { MatOptionModule } from '@angular/material/core';
 import { SettingsService } from '../../services/api/settings/settings.service';
 import { ActivatedRoute } from '@angular/router';
 
@@ -17,17 +13,13 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-authentication-form',
   standalone: true,
   imports: [
-    CommonModule,
     MatIconModule,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatTooltipModule,
     ReactiveFormsModule,
     FormsModule,
-    MatSelectModule,
-    MatOptionModule,
   ],
   templateUrl: './authentication-form.component.html',
   styleUrls: ['./authentication-form.component.scss'],
@@ -63,6 +55,10 @@ export class AuthenticationFormComponent implements OnInit, OnDestroy {
               password: settings.authentication.password,
             });
           }
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
         })
       )
       .subscribe();
@@ -81,6 +77,10 @@ export class AuthenticationFormComponent implements OnInit, OnDestroy {
             'authentication',
             this.authenticationForm.value
           );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
         })
       )
       .subscribe();

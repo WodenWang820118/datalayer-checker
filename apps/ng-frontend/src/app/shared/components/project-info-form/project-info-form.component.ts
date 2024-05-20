@@ -1,15 +1,11 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { catchError, Subject, switchMap, take, takeUntil, tap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSelectModule } from '@angular/material/select';
-import { MatOptionModule } from '@angular/material/core';
 import { SettingsService } from '../../services/api/settings/settings.service';
 import { ActivatedRoute } from '@angular/router';
 
@@ -17,17 +13,13 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-project-info-form',
   standalone: true,
   imports: [
-    CommonModule,
     MatIconModule,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatTooltipModule,
     ReactiveFormsModule,
     FormsModule,
-    MatSelectModule,
-    MatOptionModule,
   ],
   templateUrl: './project-info-form.component.html',
   styleUrls: ['./project-info-form.component.scss'],
@@ -67,6 +59,10 @@ export class ProjectInfoFormComponent implements OnInit, OnDestroy {
               googleSpreadsheetLink: settings.googleSpreadsheetLink,
             });
           }
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
         })
       )
       .subscribe();
@@ -75,7 +71,7 @@ export class ProjectInfoFormComponent implements OnInit, OnDestroy {
   onSubmit() {
     this.route.parent?.params
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         switchMap((params) => {
           const projectSlug = params['projectSlug'];
           console.log(this.projectInfoForm.value);
@@ -85,6 +81,10 @@ export class ProjectInfoFormComponent implements OnInit, OnDestroy {
             'others',
             this.projectInfoForm.value
           );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
         })
       )
       .subscribe();

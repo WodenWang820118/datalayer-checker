@@ -1,26 +1,27 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, ViewEncapsulation } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  ViewEncapsulation,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Subject, takeUntil, tap } from 'rxjs';
+import { catchError, Subject, take, takeUntil, tap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { ConfigurationService } from '../../services/api/configuration/configuration.service';
 
 @Component({
   selector: 'app-root-form',
   standalone: true,
   imports: [
-    CommonModule,
     MatIconModule,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatTooltipModule,
     ReactiveFormsModule,
     FormsModule,
   ],
@@ -40,13 +41,7 @@ import { ConfigurationService } from '../../services/api/configuration/configura
             <input matInput placeholder="D:\\projects" formControlName="name" />
           </mat-form-field>
           <mat-card-actions align="end" style="gap: 1rem">
-            <button
-              mat-raised-button
-              color="warn"
-              matTooltip="Reset and configure new root path"
-              [matTooltipPosition]="'below'"
-              (click)="onResetRoot()"
-            >
+            <button mat-raised-button color="warn" (click)="onResetRoot()">
               Reset
             </button>
             <button mat-raised-button color="primary" (click)="onFormSubmit()">
@@ -60,7 +55,7 @@ import { ConfigurationService } from '../../services/api/configuration/configura
   styles: [''],
   encapsulation: ViewEncapsulation.None,
 })
-export class RootFormComponent implements OnDestroy {
+export class RootFormComponent implements AfterViewInit, OnDestroy {
   destroy$ = new Subject<void>();
 
   rootForm = this.fb.group({
@@ -72,14 +67,43 @@ export class RootFormComponent implements OnDestroy {
     private configurationService: ConfigurationService
   ) {}
 
+  ngAfterViewInit(): void {
+    this.observeRootConfiguration();
+  }
+
+  observeRootConfiguration() {
+    this.configurationService
+      .getConfiguration('rootProjectPath')
+      .pipe(
+        takeUntil(this.destroy$),
+        tap((res) => {
+          if (res) {
+            if (res.value) {
+              this.rootForm.controls.name.setValue(res.value);
+              this.rootForm.disable();
+            }
+          }
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
+        })
+      )
+      .subscribe();
+  }
+
   onResetRoot() {
     this.configurationService
       .resetConfiguration('rootProjectPath')
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         tap(() => {
           this.rootForm.reset();
           this.rootForm.enable();
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
         })
       )
       .subscribe();
@@ -96,10 +120,13 @@ export class RootFormComponent implements OnDestroy {
         value: value,
       })
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         tap((res) => {
-          console.log('res', res);
           this.rootForm.disable();
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
         })
       )
       .subscribe();

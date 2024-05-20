@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import {
   ReactiveFormsModule,
@@ -11,12 +11,19 @@ import {
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ProjectInfoService } from '../../../../shared/services/api/project-info/project-info.service';
 import { ConfigurationService } from '../../../../shared/services/api/configuration/configuration.service';
-import { EMPTY, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  Subject,
+  switchMap,
+  take,
+  takeUntil,
+  tap,
+} from 'rxjs';
 import { ErrorDialogComponent } from '../../../../shared/components/error-dialog/error-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { InstantErrorStateMatcher } from './helper';
@@ -25,15 +32,14 @@ import { InstantErrorStateMatcher } from './helper';
   selector: 'app-init-project-form',
   standalone: true,
   imports: [
-    CommonModule,
+    NgIf,
     MatCardModule,
     ReactiveFormsModule,
     FormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
     MatButtonModule,
-    RouterModule,
+    RouterLink,
     ErrorDialogComponent,
   ],
   templateUrl: `./init-project-form.component.html`,
@@ -41,7 +47,6 @@ import { InstantErrorStateMatcher } from './helper';
 })
 export class InitProjectFormComponent implements OnInit, OnDestroy {
   projectForm: FormGroup;
-  testType = ['Data layer checker'];
   allowedSymbolsPattern = /^[a-zA-Z0-9-!'",\s]+$/;
   validProjectNameMatcher: InstantErrorStateMatcher;
 
@@ -95,6 +100,10 @@ export class InitProjectFormComponent implements OnInit, OnDestroy {
           this.projectForm.controls['projectSlug'].setValue(
             formattedValue + '-' + fourRandomChars
           );
+        }),
+        catchError((error) => {
+          console.error('Error observing project name changes:', error);
+          return EMPTY;
         })
       )
       .subscribe();
@@ -117,7 +126,7 @@ export class InitProjectFormComponent implements OnInit, OnDestroy {
     this.configurationService
       .getConfiguration('rootProjectPath')
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         tap((rootProjectPath) => {
           if (!rootProjectPath || this.isEmptyObject(rootProjectPath)) {
             this.dialog.open(ErrorDialogComponent, {
@@ -150,6 +159,10 @@ export class InitProjectFormComponent implements OnInit, OnDestroy {
               this.projectForm.value
             );
           }
+        }),
+        catchError((error) => {
+          console.error('Error initializing project:', error);
+          return EMPTY;
         })
       )
       .subscribe({
@@ -158,10 +171,6 @@ export class InitProjectFormComponent implements OnInit, OnDestroy {
             '/projects',
             this.projectForm.value['projectSlug'],
           ]);
-        },
-        error: (error) => {
-          // Handle any errors here
-          console.error('Error initializing project:', error);
         },
       });
   }

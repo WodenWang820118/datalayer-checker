@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, JsonPipe, NgIf } from '@angular/common';
 import {
   Component,
   Input,
@@ -10,17 +10,23 @@ import { MatIconModule } from '@angular/material/icon';
 import {
   Observable,
   Subject,
+  catchError,
   combineLatest,
   map,
   mergeMap,
   of,
+  take,
   takeUntil,
   tap,
 } from 'rxjs';
-import { extractEventNameFromId, IReportDetails } from '@utils';
+import {
+  extractEventNameFromId,
+  IReportDetails,
+  Recording,
+  Spec,
+} from '@utils';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { RecordingService } from '../../../../shared/services/api/recording/recording.service';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute } from '@angular/router';
 import { SpecService } from '../../../../shared/services/api/spec/spec.service';
@@ -34,10 +40,11 @@ import { Dialog } from '@angular/cdk/dialog';
   selector: 'app-report-datail-panels',
   standalone: true,
   imports: [
-    CommonModule,
+    AsyncPipe,
+    NgIf,
+    JsonPipe,
     MatIconModule,
     MatExpansionModule,
-    MatFormFieldModule,
     MatTooltipModule,
     EditorComponent,
     MatButtonModule,
@@ -50,8 +57,8 @@ import { Dialog } from '@angular/cdk/dialog';
 export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
   @Input() eventName!: string | undefined;
   @Input() reportDetails$!: Observable<IReportDetails | undefined>;
-  recording$!: Observable<any>;
-  spec$!: Observable<any>;
+  recording$!: Observable<Recording | null>;
+  spec$!: Observable<Spec | null>;
   destroy$ = new Subject<void>();
   specEdit = false;
   recordingEdit = false;
@@ -61,7 +68,7 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
   constructor(
     private recordingService: RecordingService,
     private specService: SpecService,
-    private reportService: ReportService,
+    public reportService: ReportService,
     private route: ActivatedRoute,
     private editorService: EditorService,
     private dialog: Dialog
@@ -91,6 +98,10 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
               eventId
             );
           }
+        }),
+        catchError((error) => {
+          console.error('Error: ', error);
+          return error;
         })
       )
       .subscribe();
@@ -124,7 +135,7 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
 
       this.reportService.fileContent$
         .pipe(
-          takeUntil(this.destroy$),
+          take(1),
           tap((data) => {
             if (data) {
               this.editorService.setContent(
@@ -132,6 +143,10 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
                 JSON.stringify(data)
               );
             }
+          }),
+          catchError((error) => {
+            console.error('Error reading file content: ', error);
+            return error;
           })
         )
         .subscribe();
@@ -145,7 +160,7 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
       this.editorService.editor$.specJsonEditor,
     ])
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         map(([parentParams, params, specEditor]) => {
           const specContent = specEditor.state.doc.toString();
           const eventName = params['eventName'];
@@ -173,6 +188,10 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
             eventName,
             specContent
           );
+        }),
+        catchError((error) => {
+          console.error('Error updating spec: ', error);
+          return error;
         })
       )
       .subscribe();
@@ -185,7 +204,7 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
       this.editorService.editor$.recordingJsonEditor,
     ])
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         map(([parentParams, params, recordingEditor]) => {
           const projectSlug = parentParams['projectSlug'];
           const eventId = params['eventId'];
@@ -210,11 +229,15 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
         }),
         mergeMap(({ projectSlug, eventId, recordingContent }) => {
           this.editorService.setContent('recordingJson', recordingContent);
-          return this.recordingService.addRecording(
+          return this.recordingService.updateRecording(
             projectSlug,
             eventId,
             recordingContent
           );
+        }),
+        catchError((error) => {
+          console.error('Error updating recording: ', error);
+          return error;
         })
       )
       .subscribe();
@@ -226,7 +249,7 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
       this.route.params,
     ])
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         tap(([parentParams, params]) => {
           const projectSlug = parentParams['projectSlug'];
           const eventName = params['eventName'];
@@ -241,6 +264,10 @@ export class ReportDetailPanelsComponent implements OnInit, OnDestroy {
             });
             throw new Error('Project slug and event name are required.');
           }
+        }),
+        catchError((error) => {
+          console.error('Error downloading file: ', error);
+          return error;
         })
       )
       .subscribe();

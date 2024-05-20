@@ -1,17 +1,17 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { ProjectInfo } from '@utils';
 
 @Component({
   selector: 'app-project-item',
   standalone: true,
-  imports: [CommonModule, MatCardModule],
+  imports: [MatCardModule],
   template: `
     <div class="project-item">
       <mat-card appearance="outlined">
         <mat-card-header>
           <mat-card-title>{{ project.projectName }}</mat-card-title>
+          <mat-card-subtitle>{{ project.projectSlug }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <p>{{ project.projectDescription }}</p>
@@ -19,7 +19,11 @@ import { ProjectInfo } from '@utils';
       </mat-card>
     </div>
   `,
-  styles: ``,
+  styles: `
+    .mat-mdc-card {
+      height: 200px;
+    }
+  `,
 })
 export class ProjectItemComponent {
   @Input() project!: ProjectInfo;

@@ -1,16 +1,18 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { ProjectInfoService } from '../../../../shared/services/api/project-info/project-info.service';
-import { Observable, Subject, takeUntil, tap } from 'rxjs';
-import { ProjectSetting, ProjectInfo } from '@utils';
-import { ReportTableComponent } from '../../components/report-table/report-table.component';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
-import { MatGridListModule } from '@angular/material/grid-list';
+import {
+  catchError,
+  Observable,
+  Subject,
+  take,
+  takeUntil,
+  tap,
+  timer,
+} from 'rxjs';
+import { ProjectInfo, ProjectSetting } from '@utils';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { ToolbarComponent } from '../../../../shared/components/toolbar/toolbar.component';
 import { SideNavListComponent } from '../../components/side-nav-list/side-nav-list.component';
 import { SettingsService } from '../../../../shared/services/api/settings/settings.service';
@@ -19,15 +21,9 @@ import { SettingsService } from '../../../../shared/services/api/settings/settin
   selector: 'app-project-view',
   standalone: true,
   imports: [
-    CommonModule,
-    MatToolbarModule,
-    MatIconModule,
-    MatButtonModule,
-    RouterModule,
-    ReportTableComponent,
+    AsyncPipe,
+    RouterOutlet,
     MatSidenavModule,
-    MatListModule,
-    MatGridListModule,
     ToolbarComponent,
     SideNavListComponent,
   ],
@@ -36,35 +32,55 @@ import { SettingsService } from '../../../../shared/services/api/settings/settin
   encapsulation: ViewEncapsulation.None,
 })
 export class ProjectViewComponent implements OnInit, OnDestroy {
-  project$!: Observable<ProjectSetting>;
-  projects$!: Observable<ProjectInfo[]>;
+  project$!: Observable<ProjectSetting | null>;
+  projectInfo!: ProjectInfo[];
   destroy$ = new Subject<void>();
-  hover = false;
 
   constructor(
     private route: ActivatedRoute,
     public projectInfoService: ProjectInfoService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.route.params
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         tap((params) => {
           // console.log(params);
           this.project$ = this.settingsService.switchToProject(
             params['projectSlug']
           );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
         })
       )
       .subscribe();
 
-    this.projects$ = this.projectInfoService.getProjects();
+    this.projectInfoService
+      .getProjects()
+      .pipe(
+        takeUntil(this.destroy$),
+        tap((projects) => {
+          this.projectInfo = projects;
+        }),
+        catchError((error) => {
+          console.error('Error: ', error);
+          return [];
+        })
+      )
+      .subscribe();
   }
 
-  switchHover() {
-    this.hover = !this.hover;
+  onChangeProject(projectSlug: string, snav: MatSidenav) {
+    this.project$ = this.settingsService.switchToProject(projectSlug);
+    this.router.navigate(['/projects', projectSlug]);
+    timer(700).subscribe(() => {
+      snav.open();
+    });
   }
 
   ngOnDestroy() {

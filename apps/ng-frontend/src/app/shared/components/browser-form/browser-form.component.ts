@@ -1,8 +1,8 @@
-import { CommonModule } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { catchError, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import {
@@ -13,9 +13,6 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSelectModule } from '@angular/material/select';
-import { MatOptionModule } from '@angular/material/core';
 import { SettingsService } from '../../services/api/settings/settings.service';
 import { ActivatedRoute } from '@angular/router';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -24,17 +21,14 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   selector: 'app-browser-form',
   standalone: true,
   imports: [
-    CommonModule,
+    NgIf,
     MatIconModule,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatTooltipModule,
     ReactiveFormsModule,
     FormsModule,
-    MatSelectModule,
-    MatOptionModule,
     MatCheckboxModule,
   ],
   templateUrl: `./browser-form.component.html`,
@@ -70,6 +64,10 @@ export class BrowserFormComponent implements OnInit, OnDestroy {
             project.settings.headless
           );
           this.loadInitialData();
+        }),
+        catchError((err) => {
+          console.error(err);
+          return [];
         })
       )
       .subscribe();
@@ -132,6 +130,10 @@ export class BrowserFormComponent implements OnInit, OnDestroy {
             headless,
             browser,
           });
+        }),
+        catchError((error) => {
+          console.error('Error: ', error);
+          return error;
         })
       )
       .subscribe();

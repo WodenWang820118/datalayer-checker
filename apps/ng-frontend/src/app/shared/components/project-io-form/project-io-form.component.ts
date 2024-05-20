@@ -1,35 +1,25 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { EMPTY, Subject, switchMap, take, takeUntil, tap } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  map,
+  mergeMap,
+  Subject,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatSelectModule } from '@angular/material/select';
-import { MatOptionModule } from '@angular/material/core';
-import { SettingsService } from '../../services/api/settings/settings.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectIoService } from '../../services/api/project-io/project-io.service';
+import { InformationDialogComponent } from '../information-dialog/information-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-project-io-form',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatTooltipModule,
-    ReactiveFormsModule,
-    FormsModule,
-    MatSelectModule,
-    MatOptionModule,
-  ],
+  imports: [MatButtonModule, MatCardModule, InformationDialogComponent],
   templateUrl: './project-io-form.component.html',
   styleUrls: ['./project-io-form.component.scss'],
   encapsulation: ViewEncapsulation.None,
@@ -38,40 +28,63 @@ export class ProjectIoFormComponent implements OnDestroy {
   destroy$ = new Subject<void>();
 
   constructor(
-    private fb: FormBuilder,
-    private settingsService: SettingsService,
     private route: ActivatedRoute,
-    private projectIoService: ProjectIoService
+    private projectIoService: ProjectIoService,
+    private dialog: MatDialog,
+    private router: Router
   ) {}
 
   exportProject() {
     this.route.parent?.params
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         tap((params) => {
           const projectSlug = params['projectSlug'];
           if (projectSlug) {
             this.projectIoService.exportProject(projectSlug);
           }
           return EMPTY;
+        }),
+        catchError((err) => {
+          console.error(err);
+          return EMPTY;
         })
       )
       .subscribe();
   }
 
-  importProject(event: Event) {
+  deleteProject() {
     this.route.parent?.params
       .pipe(
         take(1),
-        switchMap((params) => {
-          const projectSlug = params['projectSlug'];
-          const target = event.target as HTMLInputElement;
-          const file: File | null = target.files?.[0] || null;
+        mergeMap((params) => {
+          const dialogRef = this.dialog.open(InformationDialogComponent, {
+            data: {
+              title: 'Delete project',
+              message: 'Are you sure you want to delete this project?',
+              action: 'Delete',
+            },
+          });
 
-          if (projectSlug && file) {
-            console.log('file', file);
-            return this.projectIoService.importProject(file);
+          return dialogRef.afterClosed().pipe(
+            take(1),
+            map((result) => {
+              return { params, dialogResult: result };
+            })
+          );
+        }),
+        switchMap(({ params, dialogResult }) => {
+          const projectSlug = params['projectSlug'];
+          if (dialogResult && projectSlug) {
+            return this.projectIoService.deleteProject(projectSlug);
           }
+          return EMPTY;
+        }),
+        tap(() => {
+          this.router.navigate(['/']);
+        }),
+        catchError((err) => {
+          console.error(err);
           return EMPTY;
         })
       )

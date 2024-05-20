@@ -1,6 +1,13 @@
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component, OnDestroy } from '@angular/core';
-import { Observable, of, Subject, switchMap, takeUntil } from 'rxjs';
+import {
+  catchError,
+  Observable,
+  of,
+  Subject,
+  switchMap,
+  takeUntil,
+} from 'rxjs';
 import { TagBuildPageComponent } from '@ui';
 import { ActivatedRoute } from '@angular/router';
 import { ProjectSpec } from '@utils';
@@ -9,14 +16,14 @@ import { SpecService } from '../../../shared/services/api/spec/spec.service';
 @Component({
   selector: 'app-tag-build-view',
   standalone: true,
-  imports: [CommonModule, TagBuildPageComponent],
+  imports: [AsyncPipe, TagBuildPageComponent],
   template: `<lib-tag-build-page
     [projectSpecs]="projectSpec$ | async"
   ></lib-tag-build-page>`,
   styles: [``],
 })
 export class TagBuildViewComponent implements OnDestroy {
-  projectSpec$!: Observable<ProjectSpec>;
+  projectSpec$!: Observable<ProjectSpec | null>;
   destroy$ = new Subject<void>();
 
   constructor(private specService: SpecService, private route: ActivatedRoute) {
@@ -32,6 +39,10 @@ export class TagBuildViewComponent implements OnDestroy {
       switchMap((params) => {
         const projectSlug = params['projectSlug'] || '';
         return this.specService.getProjectSpec(projectSlug);
+      }),
+      catchError((err) => {
+        console.error(err);
+        return of(null);
       })
     );
   }

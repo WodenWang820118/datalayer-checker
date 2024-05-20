@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import {
   Subject,
+  catchError,
   combineLatest,
   forkJoin,
   map,
@@ -18,7 +19,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { RecordingService } from '../../../../shared/services/api/recording/recording.service';
 import { ReportService } from '../../../../shared/services/api/report/report.service';
@@ -35,13 +36,11 @@ import { v4 as uuidv4 } from 'uuid';
   selector: 'app-new-report-view',
   standalone: true,
   imports: [
-    CommonModule,
     MatFormFieldModule,
     FormsModule,
     ReactiveFormsModule,
     MatInputModule,
     MatButtonModule,
-    RouterModule,
     EditorComponent,
     ErrorDialogComponent,
   ],
@@ -140,7 +139,7 @@ export class NewReportViewComponent implements OnInit, OnDestroy {
       this.editorService.editor$.recordingJsonEditor,
     ])
       .pipe(
-        takeUntil(this.destroy$),
+        take(1),
         map(([specEditor, recordingEditor]) => {
           if (
             !this.reportForm.controls['testName'].value ||
@@ -212,12 +211,23 @@ export class NewReportViewComponent implements OnInit, OnDestroy {
                         ...data,
                         reportDetails,
                       ]);
+                    }),
+                    catchError((error) => {
+                      console.error(
+                        'Error updating project data source:',
+                        error
+                      );
+                      return error;
                     })
                   )
                   .subscribe();
               })
             )
-        )
+        ),
+        catchError((error) => {
+          console.error('Error uploading report:', error);
+          return error;
+        })
       )
       .subscribe({
         next: () => {
